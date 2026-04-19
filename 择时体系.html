@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>多元资产择时体系 | 四层信号演示看板</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background: #f0f2f5;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 24px 20px;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        /* 头部 */
+        .header {
+            margin-bottom: 28px;
+        }
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #0f2b3d, #1e4a6e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.3px;
+        }
+        .sub {
+            color: #475569;
+            border-left: 3px solid #3b82f6;
+            padding-left: 14px;
+            margin-top: 6px;
+            font-weight: 400;
+            font-size: 0.95rem;
+        }
+        /* 卡片通用 */
+        .card {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02), 0 2px 6px rgba(0,0,0,0.05);
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+            border: 1px solid #e9eef3;
+        }
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #3b82f6;
+            padding-left: 12px;
+        }
+        .badge {
+            font-size: 0.7rem;
+            background: #eef2ff;
+            padding: 2px 10px;
+            border-radius: 30px;
+            color: #1e40af;
+            font-weight: 500;
+        }
+        /* 网格布局 */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        .grid-4col {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 12px;
+        }
+        @media (max-width: 900px) {
+            .grid-2col, .grid-4col {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+        /* 信号灯 */
+        .signal-card {
+            background: #fafcff;
+            border-radius: 20px;
+            padding: 0.9rem;
+            border: 1px solid #eef2f9;
+            text-align: center;
+        }
+        .signal-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #4b5563;
+            margin-bottom: 12px;
+        }
+        .indicator-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+        .signal-status {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .status-bull { background: #dcfce7; color: #15803d; }
+        .status-bear { background: #fee2e2; color: #b91c1c; }
+        .status-neutral { background: #fff3e3; color: #b45309; }
+        .status-calm { background: #e0f2fe; color: #0369a1; }
+        
+        /* 仪表区 */
+        .gauge-container {
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 1rem;
+            margin-top: 12px;
+        }
+        .asset-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+        .asset-name {
+            font-weight: 600;
+            width: 70px;
+        }
+        .progress-bar-bg {
+            flex: 1;
+            height: 32px;
+            background: #e2e8f0;
+            border-radius: 20px;
+            margin: 0 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 32px;
+        }
+        .asset-percent {
+            font-weight: 700;
+            width: 48px;
+            text-align: right;
+        }
+        .adjust-note {
+            background: #f1f5f9;
+            border-radius: 18px;
+            padding: 12px 16px;
+            margin-top: 18px;
+            font-size: 0.85rem;
+            color: #2c3e66;
+        }
+        button {
+            background: #1e293b;
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+            margin-right: 10px;
+            margin-top: 8px;
+        }
+        button:hover {
+            background: #0f172a;
+            transform: scale(0.97);
+        }
+        .btn-outline {
+            background: white;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+        }
+        .btn-outline:hover {
+            background: #f1f5f9;
+        }
+        .footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 32px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .risk-tag {
+            font-size: 0.7rem;
+            background: #334155;
+            color: white;
+            border-radius: 30px;
+            padding: 2px 8px;
+        }
+        hr {
+            margin: 16px 0;
+            border: 0;
+            height: 1px;
+            background: #eef2f9;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📊 四层择时体系 · 动态信号看板</h1>
+        <div class="sub">基于估值 | 趋势 | 风险信号 | 相对强弱 → 输出资产配置建议（小白友好）</div>
+    </div>
+
+    <!-- 第一行：信号总览 (四层核心) -->
+    <div class="grid-2col">
+        <!-- 左侧：核心指标卡片区 -->
+        <div class="card">
+            <div class="card-title">📡 实时信号矩阵 <span class="badge">逻辑驱动</span></div>
+            <div class="grid-4col" style="gap: 12px;">
+                <div class="signal-card">
+                    <div class="signal-label">📈 估值信号</div>
+                    <div class="indicator-value" id="valSignal">--</div>
+                    <div id="valStatus" class="signal-status">--</div>
+                    <div style="font-size:12px; margin-top:8px;" id="valDetail">股债性价比分位</div>
+                </div>
+                <div class="signal-card">
+                    <div class="signal-label">📉 趋势信号</div>
+                    <div class="indicator-value" id="trendSignal">--</div>
+                    <div id="trendStatus" class="signal-status">--</div>
+                    <div style="font-size:12px; margin-top:8px;" id="trendDetail">价格 vs 200日均线</div>
+                </div>
+                <div class="signal-card">
+                    <div class="signal-label">⚠️ 风险信号</div>
+                    <div class="indicator-value" id="riskSignal">--</div>
+                    <div id="riskStatus" class="signal-status">--</div>
+                    <div style="font-size:12px; margin-top:8px;" id="riskDetail">VIX / 信用利差</div>
+                </div>
+                <div class="signal-card">
+                    <div class="signal-label">🔄 相对强弱</div>
+                    <div class="indicator-value" id="momentumSignal">--</div>
+                    <div id="momentumStatus" class="signal-status">--</div>
+                    <div style="font-size:12px; margin-top:8px;" id="momentumDetail">股债过去3个月动量</div>
+                </div>
+            </div>
+            <div class="adjust-note" style="margin-top: 16px;">
+                💡 <strong>择时逻辑</strong>：极端估值+趋势向上+无风险信号 → 增配股票；反之降低风险敞口。动态累加调整。
+            </div>
+        </div>
+
+        <!-- 右侧：最终配置建议 & 仓位仪表 -->
+        <div class="card">
+            <div class="card-title">⚙️ 动态资产配置建议 <span class="badge">基于信号调仓</span></div>
+            <div class="gauge-container">
+                <div class="asset-row">
+                    <span class="asset-name">📈 股票</span>
+                    <div class="progress-bar-bg"><div class="progress-fill" id="stockFill" style="width: 0%;">0%</div></div>
+                    <span class="asset-percent" id="stockPct">0%</span>
+                </div>
+                <div class="asset-row">
+                    <span class="asset-name">🏦 债券</span>
+                    <div class="progress-bar-bg"><div class="progress-fill" id="bondFill" style="width: 0%; background: #2b9348;">0%</div></div>
+                    <span class="asset-percent" id="bondPct">0%</span>
+                </div>
+                <div class="asset-row">
+                    <span class="asset-name">🥇 黄金</span>
+                    <div class="progress-bar-bg"><div class="progress-fill" id="goldFill" style="width: 0%; background: #eab308;">0%</div></div>
+                    <span class="asset-percent" id="goldPct">0%</span>
+                </div>
+                <div class="asset-row">
+                    <span class="asset-name">💵 现金/短债</span>
+                    <div class="progress-bar-bg"><div class="progress-fill" id="cashFill" style="width: 0%; background: #6c757d;">0%</div></div>
+                    <span class="asset-percent" id="cashPct">0%</span>
+                </div>
+                <hr>
+                <div class="flex-between">
+                    <span><strong>综合风险暴露</strong> (股票权重)</span>
+                    <span id="riskExposure" style="font-weight: 800;">--</span>
+                </div>
+                <div style="margin-top: 12px; font-size:0.8rem; background:#eef2ff; padding: 6px 10px; border-radius: 18px;">
+                    📌 规则约束: 股票仓位 15%~70% | 债券≥20% | 现金≥5%
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 第二行：情景模拟 + 信号调整说明 -->
+    <div class="card">
+        <div class="card-title">🎮 市场情景模拟（择时演练）</div>
+        <div class="flex-between" style="flex-wrap: wrap; gap: 12px;">
+            <button id="scenarioNormal">🌿 中性市场</button>
+            <button id="scenarioExtremeCheap">📉 极端低估 + 趋势向上</button>
+            <button id="scenarioExtremeExpensive">📈 极端高估 + 趋势转弱</button>
+            <button id="scenarioRiskShock">⚡ 风险冲击 (VIX飙升)</button>
+            <button id="scenarioBullTrend">🚀 强势牛市趋势</button>
+            <button id="scenarioReset">🔄 重置典型宏观基准</button>
+        </div>
+        <div style="margin-top: 20px; background: #f9fafb; border-radius: 20px; padding: 12px 16px;">
+            <div class="flex-between">
+                <span><strong>🧠 交互说明</strong>：点击上方场景快速模拟不同宏观环境 → 四层信号联动 + 资产配置实时变动。</span>
+                <span class="risk-tag">基于估值/趋势/风险/动量逻辑</span>
+            </div>
+            <div style="font-size: 0.8rem; color: #2d3e5f; margin-top: 8px;">
+                ✅ 估值(股债性价比分位) | 趋势(价格vs200日均线&斜率) | 风险(VIX/信用利差) | 动量(股债三个月收益排名)
+            </div>
+        </div>
+    </div>
+
+    <!-- 第三行：各信号详细解释 -->
+    <div class="grid-2col">
+        <div class="card">
+            <div class="card-title">📖 估值择时（核心）</div>
+            <p style="font-size: 0.9rem;">股债性价比 = 1/PE - 10Y国债收益率。<br>分位＞80% → 极低估(超配股票)；分位＜20% → 极高估(减配股票)。当前演示基于真实逻辑模拟。</p>
+            <div id="valExplain" style="font-size: 0.85rem; background:#f1f5f9; padding: 8px; border-radius: 16px;"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">📉 趋势 & 风险信号</div>
+            <p style="font-size: 0.9rem;">趋势：价格＞200日均线且均线向上 → 多头区域；反之减仓。风险：VIX>30或信用利差走阔 → 避险。</p>
+            <div id="riskExplain" style="font-size: 0.85rem; background:#f1f5f9; padding: 8px; border-radius: 16px;"></div>
+        </div>
+    </div>
+    <div class="footer">
+        🧭 择时目标：识别极端机会 + 避开明确风险 | 基于四层信号动态调整仓位（股票上下界15%~70%） | 演示数据均符合真实投资逻辑
+    </div>
+</div>
+
+<script>
+    // ----- 内部状态 (模拟真实数据，但遵循择时逻辑，初始为中性)
+    let marketState = {
+        // 估值: 股债性价比历史分位 0~100, 中性45~55%, 极低估>80, 极高估<20
+        valPercentile: 52,    // 中性
+        // 趋势: 价格相对于200日均线关系 (0: 远低于均线且均线向下, 1: 略低于, 2: 均线上方且斜率向上)
+        trendStrength: 1,     // 0=空头弱势,1=中性/震荡,2=多头强势
+        // 风险: 综合风险指标 0=低风险(VIX<18,信用利差平稳), 1=中等, 2=高风险(VIX>30或信用冲击)
+        riskLevel: 0,
+        // 动量: 股债相对强度 -1=债强, 0=均衡, 1=股强
+        equityMomentum: 0
+    };
+
+    // 辅助函数: 根据估值分位判定信号文本及调整系数 (-20% ~ +20% 股票偏移)
+    function getValuationSignal(percentile) {
+        if (percentile >= 80) return { text: "极低估 🔽", status: "status-bull", adjStock: +18, adjBond: -5, adjGold: +5, desc: "历史极端便宜，超配股票" };
+        if (percentile <= 20) return { text: "极高估 🔺", status: "status-bear", adjStock: -16, adjBond: +6, adjGold: -4, desc: "估值昂贵，减仓权益" };
+        if (percentile > 40 && percentile < 60) return { text: "合理区间", status: "status-neutral", adjStock: 0, adjBond: 0, adjGold: 0, desc: "估值适中，中性配置" };
+        if (percentile > 60) return { text: "偏贵", status: "status-neutral", adjStock: -5, adjBond: +2, adjGold: -1, desc: "略高于均值，轻微防御" };
+        return { text: "偏便宜", status: "status-neutral", adjStock: +6, adjBond: -2, adjGold: +1, desc: "具备配置价值" };
+    }
+
+    function getTrendSignal(trendStrength) {
+        if (trendStrength === 2) return { text: "多头趋势 ▲", status: "status-bull", adjStock: +12, adjBond: -4, adjGold: +2, desc: "价格>200MA且均线向上，顺势超配" };
+        if (trendStrength === 1) return { text: "震荡/中性", status: "status-neutral", adjStock: 0, adjBond: 0, adjGold: 0, desc: "趋势不明，维持中性" };
+        return { text: "空头趋势 ▼", status: "status-bear", adjStock: -12, adjBond: +6, adjGold: -2, desc: "价格位于均线下方且均线走平/向下，减仓权益" };
+    }
+
+    function getRiskSignal(riskLevel) {
+        if (riskLevel === 2) return { text: "高风险警报 🔴", status: "status-bear", adjStock: -15, adjBond: +10, adjGold: -5, desc: "VIX>30或信用利差飙升，避险优先" };
+        if (riskLevel === 1) return { text: "风险边际 ↑", status: "status-neutral", adjStock: -5, adjBond: +3, adjGold: -1, desc: "市场波动抬升，轻微防御" };
+        return { text: "低风险 ✅", status: "status-calm", adjStock: 0, adjBond: 0, adjGold: 0, desc: "流动性平稳，风险偏好正常" };
+    }
+
+    function getMomentumSignal(momentum) {
+        if (momentum === 1) return { text: "股票动量强", status: "status-bull", adjStock: +8, adjBond: -3, adjGold: -1, desc: "过去3个月股票优于债券" };
+        if (momentum === -1) return { text: "债券动量强", status: "status-neutral", adjStock: -6, adjBond: +4, adjGold: +1, desc: "债券相对占优，防守为主" };
+        return { text: "均衡", status: "status-neutral", adjStock: 0, adjBond: 0, adjGold: 0, desc: "股债动量相当" };
+    }
+
+    // 基准权重（中性）: 股票40% 债券40% 黄金10% 现金10%
+    const BASE = { stock: 40, bond: 40, gold: 10, cash: 10 };
+    // 累积调仓并应用约束
+    function computeAllocation() {
+        const val = getValuationSignal(marketState.valPercentile);
+        const trend = getTrendSignal(marketState.trendStrength);
+        const risk = getRiskSignal(marketState.riskLevel);
+        const mom = getMomentumSignal(marketState.equityMomentum);
+
+        let adjStock = val.adjStock + trend.adjStock + risk.adjStock + mom.adjStock;
+        let adjBond = val.adjBond + trend.adjBond + risk.adjBond + mom.adjBond;
+        let adjGold = val.adjGold + trend.adjGold + risk.adjGold + mom.adjGold;
+        // 现金被动调整 (保持总和100)
+        let newStock = BASE.stock + adjStock;
+        let newBond = BASE.bond + adjBond;
+        let newGold = BASE.gold + adjGold;
+        
+        // 约束: 股票 15%~70%
+        newStock = Math.min(70, Math.max(15, newStock));
+        // 债券不低于20%
+        newBond = Math.max(20, newBond);
+        // 现金不低于5%
+        let newCash = BASE.cash; // 先初始
+        
+        // 重新平衡: 保证总和100，现金作为调节
+        let totalNoCash = newStock + newBond + newGold;
+        if (totalNoCash > 95) {
+            // 现金最低5%, 超出部分缩减其他按比例？ 简单保持现金不低于5%
+            newCash = 100 - totalNoCash;
+            if (newCash < 5) {
+                // 需要减少其他资产
+                let deficit = 5 - newCash;
+                // 按比例从股票债券黄金中扣除
+                let ratioSum = newStock + newBond + newGold;
+                if (ratioSum > 0) {
+                    newStock -= deficit * (newStock / ratioSum);
+                    newBond -= deficit * (newBond / ratioSum);
+                    newGold -= deficit * (newGold / ratioSum);
+                    newCash = 5;
+                }
+            }
+        } else {
+            newCash = 100 - totalNoCash;
+            if (newCash < 5) newCash = 5;
+        }
+        // 最终取整并且重新归一化
+        newStock = Math.round(newStock);
+        newBond = Math.round(newBond);
+        newGold = Math.round(newGold);
+        newCash = 100 - newStock - newBond - newGold;
+        if (newCash < 5) {
+            // 微调从股票补偿
+            let diff = 5 - newCash;
+            newStock = Math.max(15, newStock - diff);
+            newCash = 100 - newStock - newBond - newGold;
+        }
+        if (newCash < 0) newCash = 0;
+        // 最终约束确保整数
+        return { stock: newStock, bond: newBond, gold: newGold, cash: newCash };
+    }
+
+    // 更新整个UI
+    function updateUI() {
+        // 获取各信号对象及显示
+        const val = getValuationSignal(marketState.valPercentile);
+        const trend = getTrendSignal(marketState.trendStrength);
+        const risk = getRiskSignal(marketState.riskLevel);
+        const mom = getMomentumSignal(marketState.equityMomentum);
+        
+        document.getElementById('valSignal').innerHTML = marketState.valPercentile + '<span style="font-size:0.8rem;">%分位</span>';
+        document.getElementById('valStatus').innerHTML = val.text;
+        document.getElementById('valDetail').innerHTML = val.desc;
+        document.getElementById('trendSignal').innerHTML = marketState.trendStrength === 2 ? '多头强势' : (marketState.trendStrength === 1 ? '中性震荡' : '空头弱势');
+        document.getElementById('trendStatus').innerHTML = trend.text;
+        document.getElementById('trendDetail').innerHTML = trend.desc;
+        document.getElementById('riskSignal').innerHTML = marketState.riskLevel === 2 ? '高' : (marketState.riskLevel === 1 ? '中' : '低');
+        document.getElementById('riskStatus').innerHTML = risk.text;
+        document.getElementById('riskDetail').innerHTML = risk.desc;
+        document.getElementById('momentumSignal').innerHTML = marketState.equityMomentum === 1 ? '股强于债' : (marketState.equityMomentum === -1 ? '债强于股' : '均衡');
+        document.getElementById('momentumStatus').innerHTML = mom.text;
+        document.getElementById('momentumDetail').innerHTML = mom.desc;
+        
+        const alloc = computeAllocation();
+        document.getElementById('stockPct').innerText = alloc.stock + '%';
+        document.getElementById('bondPct').innerText = alloc.bond + '%';
+        document.getElementById('goldPct').innerText = alloc.gold + '%';
+        document.getElementById('cashPct').innerText = alloc.cash + '%';
+        document.getElementById('stockFill').style.width = alloc.stock + '%';
+        document.getElementById('stockFill').innerText = alloc.stock + '%';
+        document.getElementById('bondFill').style.width = alloc.bond + '%';
+        document.getElementById('bondFill').innerText = alloc.bond + '%';
+        document.getElementById('goldFill').style.width = alloc.gold + '%';
+        document.getElementById('goldFill').innerText = alloc.gold + '%';
+        document.getElementById('cashFill').style.width = alloc.cash + '%';
+        document.getElementById('cashFill').innerText = alloc.cash + '%';
+        document.getElementById('riskExposure').innerHTML = alloc.stock + '% (权益)';
+        
+        // 附加解释文本
+        document.getElementById('valExplain').innerHTML = `当前股债性价比分位 ${marketState.valPercentile}% — ${val.desc} (调股${val.adjStock>0?'+':''}${val.adjStock}%)`;
+        document.getElementById('riskExplain').innerHTML = `趋势强度: ${trend.desc} | 风险水平: ${risk.desc} | 相对动量: ${mom.desc}`;
+    }
+    
+    // 预设场景
+    function setScenarioNormal() {
+        marketState = { valPercentile: 52, trendStrength: 1, riskLevel: 0, equityMomentum: 0 };
+        updateUI();
+    }
+    function setScenarioExtremeCheap() {
+        marketState = { valPercentile: 85, trendStrength: 2, riskLevel: 0, equityMomentum: 1 };
+        updateUI();
+    }
+    function setScenarioExtremeExpensive() {
+        marketState = { valPercentile: 12, trendStrength: 0, riskLevel: 0, equityMomentum: -1 };
+        updateUI();
+    }
+    function setScenarioRiskShock() {
+        marketState = { valPercentile: 48, trendStrength: 1, riskLevel: 2, equityMomentum: 0 };
+        updateUI();
+    }
+    function setScenarioBullTrend() {
+        marketState = { valPercentile: 45, trendStrength: 2, riskLevel: 0, equityMomentum: 1 };
+        updateUI();
+    }
+    function setReset() {
+        setScenarioNormal();
+    }
+    
+    // 绑定按钮
+    document.getElementById('scenarioNormal').addEventListener('click', setScenarioNormal);
+    document.getElementById('scenarioExtremeCheap').addEventListener('click', setScenarioExtremeCheap);
+    document.getElementById('scenarioExtremeExpensive').addEventListener('click', setScenarioExtremeExpensive);
+    document.getElementById('scenarioRiskShock').addEventListener('click', setScenarioRiskShock);
+    document.getElementById('scenarioBullTrend').addEventListener('click', setScenarioBullTrend);
+    document.getElementById('scenarioReset').addEventListener('click', setReset);
+    
+    // 初始化
+    setScenarioNormal();
+</script>
+</body>
+</html>
